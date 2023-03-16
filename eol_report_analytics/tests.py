@@ -31,7 +31,7 @@ import uuid
 
 class TestEolReportAnalyticsView(ModuleStoreTestCase):
     def setUp(self):
-        super(TestXblockCompletionView, self).setUp()
+        super(TestEolReportAnalyticsView, self).setUp()
         self.course = CourseFactory.create(
             org='mss',
             course='999',
