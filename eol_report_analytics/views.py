@@ -325,15 +325,34 @@ class EolReportAnalyticsView(View):
             else:
                 lcq[0].append(x)
 
-        csvwriter.writerow(['Pregunta con mas correctas']+mcq[0]+[mcq[1]])
-        csvwriter.writerow(['Pregunta con menos correctas']+lcq[0]+[mcq[1]])
-        csvwriter.writerow([])
-        csvwriter.writerow([])
         questions = self.get_questions(generated_report_data)
         if questions:
-            csvwriter.writerow(['Preguntas'])
+            aux = ['Pregunta con mas correctas']
+            for idq in mcq[0]:
+                aux.append('Pregunta {}'.format(aux_headers.index(idq) + 1))
+            csvwriter.writerow(aux+['Cant: {}'.format(mcq[1])])
+            aux = ['Pregunta con menos correctas']
+            for idq in lcq[0]:
+                aux.append('Pregunta {}'.format(aux_headers.index(idq) + 1))
+            csvwriter.writerow(aux+['Cant: {}'.format(lcq[1])])
+            csvwriter.writerow([])
+            csvwriter.writerow([])
+            csvwriter.writerow(_get_utf8_encoded_rows(['Preguntas', '', 'Respuesta', '% de correctas', '% de incorrectas']))
             for x in range(len(aux_headers)):
-                csvwriter.writerow(_get_utf8_encoded_rows(['Pregunta {}'.format(x + 1), questions[aux_headers[x]]]))
+                row = [
+                    'Pregunta {}'.format(x + 1), 
+                    questions[aux_headers[x]]['question'],
+                    questions[aux_headers[x]]['correct']
+                ]
+                if aux_headers[x] in analytics['correct']:
+                    row.append(analytics['correct'][aux_headers[x]] / analytics['users'])
+                else:
+                    row.append(0)
+                if aux_headers[x] in analytics['incorrect']:
+                    row.append(analytics['incorrect'][aux_headers[x]] / analytics['users'])
+                else:
+                    row.append(0)
+                csvwriter.writerow(_get_utf8_encoded_rows(row))
         return csvwriter
 
     def get_headers(self, student_states):
@@ -350,7 +369,10 @@ class EolReportAnalyticsView(View):
             if questions:
                 break
             for user_state in generated_report_data[username]:
-                questions[user_state[_("Answer ID")]] = user_state[_("Question")]
+                if _("Correct Answer") in user_state:
+                    questions[user_state[_("Answer ID")]] = {'question':user_state[_("Question")], 'correct':user_state[_("Correct Answer")]}
+                else:
+                    questions[user_state[_("Answer ID")]] = {'question':user_state[_("Question")], 'correct':''}
         return questions
 
     def process_data_course(self, course_structure, filter_types, list_blocks, section='', subsection='', unit='', iteri=[1,1,1]):
@@ -404,7 +426,7 @@ class EolReportAnalyticsView(View):
             correct_answer = ''
             if _("Correct Answer") in user_state:
                 correct_answer = user_state[_("Correct Answer")]
-            aux_response[user_state[_("Answer ID")]] = '{} ({}) - {}'.format(user_state[_("Answer")], correct_answer, user_state[_("Answer ID")])
+            aux_response[user_state[_("Answer ID")]] = user_state[_("Answer")]
             #id_response.append(user_state[_("Answer ID")])
             if user_state[_("Answer")] == correct_answer:
                 aux_analytics['correct'].append(user_state[_("Answer ID")])
