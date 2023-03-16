@@ -47,4 +47,4 @@ To enable export Eol Report Analytics button in your theme add next file and/or 
 **Prepare tests:**
 
     > cd .github/
-    > docker-compose run lms /openedx/requirements/eol_xblock_completion/.github/test.sh
+    > docker-compose run lms /openedx/requirements/eol_report_analytics/.github/test.sh
