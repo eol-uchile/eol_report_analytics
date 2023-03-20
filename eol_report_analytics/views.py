@@ -12,7 +12,6 @@ from xmodule.modulestore.exceptions import ItemNotFoundError
 from django.core.exceptions import FieldError
 from django.contrib.auth.models import User
 from django.utils.translation import gettext as _
-#from .utils import get_data_course
 import requests
 import json
 import six
@@ -77,7 +76,6 @@ def generate(_xmodule_instance_args, _entry_id, course_id, task_input, action_na
     
     data = task_input.get('data')
     students = EolReportAnalyticsView().get_all_enrolled_users(data['course'])
-    #course_structure = get_data_course(data['course'])
 
     report_store = ReportStore.from_config('GRADES_DOWNLOAD')
     csv_name = 'Analitica_de_Preguntas'
@@ -91,7 +89,6 @@ def generate(_xmodule_instance_args, _entry_id, course_id, task_input, action_na
     if six.PY2:
         output_buffer.write(codecs.BOM_UTF8)
     csvwriter = csv.writer(output_buffer)
-
     student_states = EolReportAnalyticsView().get_all_states(data['block'])
     csvwriter = EolReportAnalyticsView()._build_student_data(data, students, data['block'], student_states, csvwriter)
 
@@ -248,7 +245,6 @@ class EolReportAnalyticsView(View):
         with store.bulk_operations(course_key):
             block_key = UsageKey.from_string(block)
             block_item = store.get_item(block_key)
-            generated_report_data = defaultdict(list)
             generated_report_data = self.get_report_xblock(block_key, student_states, block_item)
             if generated_report_data is not None:
                 jumo_to_url = url_base + reverse('jump_to',kwargs={
@@ -374,32 +370,6 @@ class EolReportAnalyticsView(View):
                 else:
                     questions[user_state[_("Answer ID")]] = {'question':user_state[_("Question")], 'correct':''}
         return questions
-
-    def process_data_course(self, course_structure, filter_types, list_blocks, section='', subsection='', unit='', iteri=[1,1,1]):
-        """
-            Extract all block_type in filter_types from course_structure
-        """
-        if 'child_info' in course_structure:
-            for data in course_structure['child_info']['children']:
-                if data['category'] == 'chapter':
-                    aux = str(iteri[0]) + '.' +data['display_name']
-                    list_blocks = self.process_data_course(data, filter_types, list_blocks, section=aux, iteri=iteri)
-                    iteri[0] = iteri[0] + 1
-                    iteri[1] = 1
-                    iteri[2] = 1
-                elif data['category'] == 'sequential':
-                    aux = str(iteri[0]) + '.' + str(iteri[1]) + '.' + data['display_name']
-                    list_blocks = self.process_data_course(data, filter_types, list_blocks, section=section, subsection=aux, iteri=iteri)
-                    iteri[1] = iteri[1] + 1
-                    iteri[2] = 1
-                elif data['category'] == 'vertical':
-                    aux = str(iteri[0]) + '.' + str(iteri[1]) + '.' + str(iteri[2]) + '.' + data['display_name']
-                    list_blocks = self.process_data_course(data, filter_types, list_blocks, section=section, subsection=subsection, unit=aux, iteri=iteri)
-                    iteri[2] = iteri[2] + 1
-                elif data['category'] in filter_types:
-                    list_blocks.append({'section': section, 'subsection': subsection, 'unit': unit, 'block_id': data['id']})
-
-        return list_blocks
 
     def set_data(self, response, students, user_states, questions_ids):
         """
