@@ -187,15 +187,108 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             header_row, 
             student_row1, 
             student_row2,
-            'Cuantos contestaron,2',
-            'Cuantos no contestaron,0',
+            'Usuarios inscritos,2',
+            'Cuantos contestaron,2,1.0',
+            'Cuantos no contestaron,0,0',
             'Promedio,0.5',
             'Desviacion estandar,0.16666666666666666',
-            'Pregunta con mas correctas,Pregunta 1,Cant: 2',
-            'Pregunta con menos correctas,Pregunta 2,Cant: 2',
+            'Pregunta con mas correctas,1,2,1.0,0,0',
+            'Pregunta con menos correctas,2,0,0,2,1.0',
             'Preguntas,,Respuesta,% de correctas,% de incorrectas',
             'Pregunta 1,question_text_1,correct_answer_text_1,1.0,0',
             'Pregunta 2,question_text_2,correct_answer_text_2,0,1.0',
+            ]
+        self._verify_csv_file_report(report_store, expected_data)
+
+    @patch("eol_report_analytics.views.modulestore")
+    @patch("eol_report_analytics.views.EolReportAnalyticsView.get_report_xblock")
+    def test_eol_report_analytics_get_all_data_correct(self, report, store_mock):
+        """
+            Test eol_report_analytics view data
+        """
+        u1_state_1 = {_("Answer ID"): 'answer_id_1',
+            _("Question"): 'question_text_1',
+            _("Answer"): 'correct_answer_text_1',
+            _("Correct Answer") : 'correct_answer_text_1'
+            }
+        u1_state_2 = {_("Answer ID"): 'answer_id_2',
+            _("Question"): 'question_text_2',
+            _("Answer"): 'correct_answer_text_2',
+            _("Correct Answer") : 'correct_answer_text_2'
+            }
+        u2_state_1 = {_("Answer ID"): 'answer_id_1',
+            _("Question"): 'question_text_1',
+            _("Answer"): 'correct_answer_text_1',
+            _("Correct Answer") : 'correct_answer_text_1'
+            }
+        u2_state_2 = {_("Answer ID"): 'answer_id_2',
+            _("Question"): 'question_text_2',
+            _("Answer"): 'correct_answer_text_2',
+            _("Correct Answer") : 'correct_answer_text_2'
+            }
+        generated_report_data = {
+            self.student.username : [u1_state_1,u1_state_2],
+            self.student2.username : [u2_state_1,u2_state_2],
+            }               
+        report.return_value = generated_report_data
+        store_mock = Mock()
+        from lms.djangoapps.courseware.models import StudentModule
+        data = {'block': self.block_id, 'course': str(self.course.id), 'base_url':'this_is_a_url'}
+        task_input = {'data': data }
+        usage_key = UsageKey.from_string(self.block_id)
+        module = StudentModule(
+            module_state_key=usage_key,
+            student=self.student,
+            course_id=usage_key.course_key,
+            module_type='problem',
+            state='{"score": {"raw_earned": 3, "raw_possible": 3}, "seed": 1, "attempts": 1, "input_state": {"answer_id_1": 1, "answer_id_2": 2}}')
+        module.save()
+        module2 = StudentModule(
+            module_state_key=usage_key,
+            student=self.student2,
+            course_id=usage_key.course_key,
+            module_type='problem',
+            state='{"score": {"raw_earned": 3, "raw_possible": 3}, "seed": 1, "attempts": 2, "input_state": {"answer_id_1": 1, "answer_id_2": 2}}')
+        module2.save()
+        with patch('lms.djangoapps.instructor_task.tasks_helper.runner._get_current_task'):
+            result = generate(
+                None, None, self.course.id,
+                task_input, 'Eol_Report_Analytics'
+            )
+        report_store = ReportStore.from_config(config_name='GRADES_DOWNLOAD')
+        header_row = ",".join(['Username', 'Email', 'Run', 'Intentos', 'Pregunta 1', 'Pregunta 2', 'Ptos Obtenidos', 'Tolal de la Pregunta', 'Nota'])
+        student_row1 = ",".join([
+            self.student.username,
+            self.student.email,
+            '',
+            '1',
+            u1_state_1[_("Answer")],
+            u1_state_2[_("Answer")],
+            '3','3', '1.0'
+        ])
+        student_row2 = ",".join([
+            self.student2.username,
+            self.student2.email,
+            '',
+            '2',
+            u2_state_1[_("Answer")],
+            u2_state_2[_("Answer")],
+            '3','3', '1.0'
+        ])
+        expected_data = [
+            header_row, 
+            student_row1, 
+            student_row2,
+            'Usuarios inscritos,2',
+            'Cuantos contestaron,2,1.0',
+            'Cuantos no contestaron,0,0',
+            'Promedio,1.0',
+            'Desviacion estandar,0',
+            'Pregunta con mas correctas,1 - 2,2,1.0,0,0',
+            'Pregunta con menos correctas,,0,0,0,0',
+            'Preguntas,,Respuesta,% de correctas,% de incorrectas',
+            'Pregunta 1,question_text_1,correct_answer_text_1,1.0,0',
+            'Pregunta 2,question_text_2,correct_answer_text_2,1.0,0',
             ]
         self._verify_csv_file_report(report_store, expected_data)
 

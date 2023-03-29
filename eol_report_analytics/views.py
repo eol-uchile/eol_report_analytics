@@ -294,8 +294,11 @@ class EolReportAnalyticsView(View):
         csvwriter.writerow([])
         csvwriter.writerow([])
         csvwriter.writerow(['Analitica'])
-        csvwriter.writerow(['Cuantos contestaron', analytics['users']])
-        csvwriter.writerow(['Cuantos no contestaron', len(students) - analytics['users']])
+        csvwriter.writerow([])
+        csvwriter.writerow(['','','%'])
+        csvwriter.writerow(['Usuarios inscritos', len(students)])
+        csvwriter.writerow(['Cuantos contestaron', analytics['users'], float(analytics['users']/len(students))])
+        csvwriter.writerow(['Cuantos no contestaron', len(students) - analytics['users'], float((len(students) - analytics['users'])/len(students))])
         if analytics['score']:
             csvwriter.writerow(['Promedio', mean(analytics['score'])])
             csvwriter.writerow(['Desviacion estandar', pstdev(analytics['score'])])
@@ -323,14 +326,28 @@ class EolReportAnalyticsView(View):
 
         questions = self.get_questions(generated_report_data)
         if questions:
-            aux = ['Pregunta con mas correctas']
+            csvwriter.writerow([])
+            csvwriter.writerow(['', 'Pregunta(s)', 'Correctas', '% de Correctas', 'Incorrectas', '% de Incorrectas'])
+            aux = ['Pregunta con mas correctas', '', 0, 0, 0, 0]
             for idq in mcq[0]:
-                aux.append('Pregunta {}'.format(aux_headers.index(idq) + 1))
-            csvwriter.writerow(aux+['Cant: {}'.format(mcq[1])])
-            aux = ['Pregunta con menos correctas']
+                aux[1] = aux[1] + '{} - '.format(aux_headers.index(idq) + 1)
+            aux[1] = aux[1][:-3]
+            aux[2] = mcq[1]
+            aux[3] = (mcq[1] / analytics['users'])
+            if len(mcq[0]) > 0:
+                aux[4] = analytics['incorrect'][mcq[0][0]] if mcq[0][0] in analytics['incorrect'] else '0'
+                aux[5] = (analytics['incorrect'][mcq[0][0]] / analytics['users']) if mcq[0][0] in analytics['incorrect'] else '0'
+            csvwriter.writerow(aux)
+            aux = ['Pregunta con menos correctas', '', 0, 0, 0, 0]
             for idq in lcq[0]:
-                aux.append('Pregunta {}'.format(aux_headers.index(idq) + 1))
-            csvwriter.writerow(aux+['Cant: {}'.format(lcq[1])])
+                aux[1] = aux[1] + '{} - '.format(aux_headers.index(idq) + 1)
+            aux[1] = aux[1][:-3]
+            aux[4] = lcq[1]
+            aux[5] = (lcq[1] / analytics['users'])
+            if len(lcq[0]) > 0:
+                aux[2] = analytics['correct'][lcq[0][0]] if lcq[0][0] in analytics['correct'] else '0'
+                aux[3] = (analytics['correct'][lcq[0][0]] / analytics['users']) if lcq[0][0] in analytics['correct'] else '0'
+            csvwriter.writerow(aux)
             csvwriter.writerow([])
             csvwriter.writerow([])
             csvwriter.writerow(_get_utf8_encoded_rows(['Preguntas', '', 'Respuesta', '% de correctas', '% de incorrectas']))
