@@ -164,8 +164,8 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
                 task_input, 'Eol_Report_Analytics'
             )
         report_store = ReportStore.from_config(config_name='GRADES_DOWNLOAD')
-        header_row = ",".join(['Username', 'Email', 'Run', 'Intentos', 'Pregunta 1', 'Pregunta 2', 'Ptos Obtenidos', 'Tolal de la Pregunta', 'Nota'])
-        student_row1 = ",".join([
+        header_row = ";".join(['Username', 'Email', 'Run', 'Intentos', 'Pregunta 1', 'Pregunta 2', 'Ptos Obtenidos', 'Tolal de la Pregunta', 'Nota'])
+        student_row1 = ";".join([
             self.student.username,
             self.student.email,
             '',
@@ -174,7 +174,7 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             u1_state_2[_("Answer")],
             '1','3', str(float(1)/float(3))
         ])
-        student_row2 = ",".join([
+        student_row2 = ";".join([
             self.student2.username,
             self.student2.email,
             '',
@@ -187,16 +187,16 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             header_row, 
             student_row1, 
             student_row2,
-            'Usuarios inscritos,2',
-            'Cuantos contestaron,2,1.0',
-            'Cuantos no contestaron,0,0',
-            'Promedio,0.5',
-            'Desviacion estandar,0.16666666666666666',
-            'Pregunta con mas correctas,1,2,1.0,0,0',
-            'Pregunta con menos correctas,2,0,0,2,1.0',
-            'Preguntas,,Respuesta,% de correctas,% de incorrectas',
-            'Pregunta 1,question_text_1,correct_answer_text_1,1.0,0',
-            'Pregunta 2,question_text_2,correct_answer_text_2,0,1.0',
+            'Usuarios inscritos;2',
+            'Cuantos contestaron;2;1.0',
+            'Cuantos no contestaron;0;0',
+            'Promedio;0.5',
+            'Desviacion estandar;0.16666666666666666',
+            'Pregunta con mas correctas;P1;2;1.0;0;0',
+            'Pregunta con menos correctas;P2;0;0;2;1.0',
+            'Preguntas;;Respuesta;Indice de dificultad;% de correctas;% de incorrectas;Indice discriminatorio',
+            'Pregunta 1;question_text_1;correct_answer_text_1;4;1.0;0;0',
+            'Pregunta 2;question_text_2;correct_answer_text_2;;0;1.0;0',
             ]
         self._verify_csv_file_report(report_store, expected_data)
 
@@ -256,8 +256,8 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
                 task_input, 'Eol_Report_Analytics'
             )
         report_store = ReportStore.from_config(config_name='GRADES_DOWNLOAD')
-        header_row = ",".join(['Username', 'Email', 'Run', 'Intentos', 'Pregunta 1', 'Pregunta 2', 'Ptos Obtenidos', 'Tolal de la Pregunta', 'Nota'])
-        student_row1 = ",".join([
+        header_row = ";".join(['Username', 'Email', 'Run', 'Intentos', 'Pregunta 1', 'Pregunta 2', 'Ptos Obtenidos', 'Tolal de la Pregunta', 'Nota'])
+        student_row1 = ";".join([
             self.student.username,
             self.student.email,
             '',
@@ -266,7 +266,7 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             u1_state_2[_("Answer")],
             '3','3', '1.0'
         ])
-        student_row2 = ",".join([
+        student_row2 = ";".join([
             self.student2.username,
             self.student2.email,
             '',
@@ -279,16 +279,16 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             header_row, 
             student_row1, 
             student_row2,
-            'Usuarios inscritos,2',
-            'Cuantos contestaron,2,1.0',
-            'Cuantos no contestaron,0,0',
-            'Promedio,1.0',
-            'Desviacion estandar,0',
-            'Pregunta con mas correctas,1 - 2,2,1.0,0,0',
-            'Pregunta con menos correctas,,0,0,0,0',
-            'Preguntas,,Respuesta,% de correctas,% de incorrectas',
-            'Pregunta 1,question_text_1,correct_answer_text_1,1.0,0',
-            'Pregunta 2,question_text_2,correct_answer_text_2,1.0,0',
+            'Usuarios inscritos;2',
+            'Cuantos contestaron;2;1.0',
+            'Cuantos no contestaron;0;0',
+            'Promedio;1.0',
+            'Desviacion estandar;0',
+            'Pregunta con mas correctas;P1 - P2;2;1.0;0;0',
+            'Pregunta con menos correctas;;0;0;0;0',
+            'Preguntas;;Respuesta;Indice de dificultad;% de correctas;% de incorrectas;Indice discriminatorio',
+            'Pregunta 1;question_text_1;correct_answer_text_1;4;1.0;0;0',
+            'Pregunta 2;question_text_2;correct_answer_text_2;4;1.0;0;0',
             ]
         self._verify_csv_file_report(report_store, expected_data)
 
@@ -319,9 +319,9 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             )
         report_store = ReportStore.from_config(config_name='GRADES_DOWNLOAD')
         expected_data = [
-            'Cuantos contestaron,0',
-            'Cuantos no contestaron,2',
-            'Promedio,0',
+            'Cuantos contestaron;0',
+            'Cuantos no contestaron;2',
+            'Promedio;0',
             'Desviacion estandar'
             ]
         self._verify_csv_file_report(report_store, expected_data)

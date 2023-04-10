@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.views.generic.base import View
 from opaque_keys.edx.keys import CourseKey, UsageKey, LearningContextKey
 from django.http import Http404, HttpResponse, JsonResponse
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, Counter
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.exceptions import ItemNotFoundError
 from django.core.exceptions import FieldError
@@ -88,7 +88,10 @@ def generate(_xmodule_instance_args, _entry_id, course_id, task_input, action_na
     output_buffer = ContentFile('')
     if six.PY2:
         output_buffer.write(codecs.BOM_UTF8)
-    csvwriter = csv.writer(output_buffer)
+    csvwriter = csv.writer(
+            output_buffer,
+            delimiter=';',
+            dialect='excel')
     student_states = EolReportAnalyticsView().get_all_states(data['block'])
     csvwriter = EolReportAnalyticsView()._build_student_data(data, students, data['block'], student_states, csvwriter)
 
@@ -240,14 +243,19 @@ class EolReportAnalyticsView(View):
         course_key = CourseKey.from_string(course_id)
         header = ['Username', 'Email', 'Run', 'Intentos']
         analytics = {'users': 0, 'correct': {}, 'incorrect': {}, 'score': []}
-        
+        best_quartile = defaultdict(list)
+        best_quartile_list = []
+        worst_quartile = defaultdict(list)
+        worst_quartile_list = []
+        quartile = 0
         store = modulestore()
         with store.bulk_operations(course_key):
             block_key = UsageKey.from_string(block)
             block_item = store.get_item(block_key)
             generated_report_data = self.get_report_xblock(block_key, student_states, block_item)
             if generated_report_data is not None:
-                jumo_to_url = url_base + reverse('jump_to',kwargs={
+                quartile = int(len(generated_report_data) / 4)
+                jumo_to_url = url_base + reverse('jump_to', kwargs={
                             'course_id': course_id,
                             'location': block})
                 aux_headers = self.get_headers(student_states)
@@ -290,6 +298,10 @@ class EolReportAnalyticsView(View):
                                         else:
                                             analytics['incorrect'][x] = 1
                                     csvwriter.writerow(_get_utf8_encoded_rows(responses))
+                                    #TO DO: optimaze get discriminatory index
+                                    best_quartile, best_quartile_list = self.order_best_quartile(best_quartile, best_quartile_list, quartile, aux_analytics)
+                                    worst_quartile, worst_quartile_list = self.order_worst_quartile(worst_quartile, worst_quartile_list, quartile, aux_analytics)
+
         #Analytics Here!
         csvwriter.writerow([])
         csvwriter.writerow([])
@@ -330,7 +342,7 @@ class EolReportAnalyticsView(View):
             csvwriter.writerow(['', 'Pregunta(s)', 'Correctas', '% de Correctas', 'Incorrectas', '% de Incorrectas'])
             aux = ['Pregunta con mas correctas', '', 0, 0, 0, 0]
             for idq in mcq[0]:
-                aux[1] = aux[1] + '{} - '.format(aux_headers.index(idq) + 1)
+                aux[1] = aux[1] + 'P{} - '.format(aux_headers.index(idq) + 1)
             aux[1] = aux[1][:-3]
             aux[2] = mcq[1]
             aux[3] = (mcq[1] / analytics['users'])
@@ -340,7 +352,7 @@ class EolReportAnalyticsView(View):
             csvwriter.writerow(aux)
             aux = ['Pregunta con menos correctas', '', 0, 0, 0, 0]
             for idq in lcq[0]:
-                aux[1] = aux[1] + '{} - '.format(aux_headers.index(idq) + 1)
+                aux[1] = aux[1] + 'P{} - '.format(aux_headers.index(idq) + 1)
             aux[1] = aux[1][:-3]
             aux[4] = lcq[1]
             aux[5] = (lcq[1] / analytics['users'])
@@ -350,7 +362,9 @@ class EolReportAnalyticsView(View):
             csvwriter.writerow(aux)
             csvwriter.writerow([])
             csvwriter.writerow([])
-            csvwriter.writerow(_get_utf8_encoded_rows(['Preguntas', '', 'Respuesta', '% de correctas', '% de incorrectas']))
+            csvwriter.writerow(_get_utf8_encoded_rows(['Preguntas', '', 'Respuesta','Indice de dificultad', '% de correctas', '% de incorrectas', 'Indice discriminatorio']))
+            
+            best, worst = self.get_discriminatory_index(best_quartile, best_quartile_list, worst_quartile, worst_quartile_list, quartile, analytics['users'])
             for x in range(len(aux_headers)):
                 row = [
                     'Pregunta {}'.format(x + 1), 
@@ -358,15 +372,76 @@ class EolReportAnalyticsView(View):
                     questions[aux_headers[x]]['correct']
                 ]
                 if aux_headers[x] in analytics['correct']:
+                    row.append(analytics['correct'][aux_headers[x]] * analytics['users'])
                     row.append(analytics['correct'][aux_headers[x]] / analytics['users'])
                 else:
+                    row.append('')
                     row.append(0)
                 if aux_headers[x] in analytics['incorrect']:
                     row.append(analytics['incorrect'][aux_headers[x]] / analytics['users'])
                 else:
                     row.append(0)
+                row.append((best.get(aux_headers[x], 0) - worst.get(aux_headers[x], 0)) * int(analytics['users']))
                 csvwriter.writerow(_get_utf8_encoded_rows(row))
         return csvwriter
+
+    def get_discriminatory_index(self, best_quartile, best_quartile_list, worst_quartile, worst_quartile_list, quartile, answered):
+        discriminatory_index = {}
+        if quartile != int(answered / 4):
+            q = int(answered / 4)
+            aux = quartile - q
+            for x in range(aux):
+                if len(best_quartile[best_quartile_list[x]]) > 1:
+                    best_quartile[best_quartile_list[x]].pop()
+                else:
+                    best_quartile.pop(best_quartile_list[x])
+            best_quartile_list = best_quartile_list[aux:]
+
+            for x in range(aux):
+                if len(best_quartile[best_quartile_list[x]]) > 1:
+                    best_quartile[best_quartile_list[x]].pop()
+                else:
+                    best_quartile.pop(best_quartile_list[x])
+                y = x + q
+                if len(worst_quartile[worst_quartile_list[y]]) > 1:
+                    worst_quartile[worst_quartile_list[y]].pop()
+                else:
+                    worst_quartile.pop(worst_quartile_list[y])
+            #best_quartile_list = best_quartile_list[aux:]
+            #worst_quartile_list = worst_quartile_list[:q]
+        best = Counter(x for xs in best_quartile.values() for xq in xs for x in xq)
+        worst = Counter(x for xs in worst_quartile.values() for xq in xs for x in xq)
+        return best, worst
+
+    def order_best_quartile(self, best_quartile, best_quartile_list, quartile, aux_analytics):
+        if len(best_quartile_list) < quartile:
+            best_quartile_list.append(aux_analytics['score'])
+            best_quartile[aux_analytics['score']].append(aux_analytics['correct'])
+        else:
+            if quartile != 0 and best_quartile_list[0] < aux_analytics['score']:
+                if len(best_quartile[best_quartile_list[0]]) > 1:
+                    best_quartile[best_quartile_list[0]].pop()
+                else:
+                    best_quartile.pop(best_quartile_list[0])
+                best_quartile_list[0] = aux_analytics['score']
+                best_quartile[aux_analytics['score']].append(aux_analytics['correct'])
+        best_quartile_list.sort()
+        return best_quartile, best_quartile_list
+
+    def order_worst_quartile(self, worst_quartile, worst_quartile_list, quartile, aux_analytics):
+        if len(worst_quartile_list) < quartile:
+            worst_quartile_list.append(aux_analytics['score'])
+            worst_quartile[aux_analytics['score']].append(aux_analytics['correct'])
+        else:
+            if quartile != 0 and worst_quartile_list[-1] > aux_analytics['score']:
+                if len(worst_quartile[worst_quartile_list[-1]]) > 1:
+                    worst_quartile[worst_quartile_list[-1]].pop()
+                else:
+                    worst_quartile.pop(worst_quartile_list[-1])
+                worst_quartile_list[-1] = aux_analytics['score']
+                worst_quartile[aux_analytics['score']].append(aux_analytics['correct'])
+        worst_quartile_list.sort()
+        return worst_quartile, worst_quartile_list
 
     def get_headers(self, student_states):
         for response in student_states:
@@ -408,13 +483,11 @@ class EolReportAnalyticsView(View):
                 raw_state['attempts']
                 ]
         aux_response = {}
-        #id_response = []
         for user_state in user_states:
             correct_answer = ''
             if _("Correct Answer") in user_state:
                 correct_answer = user_state[_("Correct Answer")]
             aux_response[user_state[_("Answer ID")]] = user_state[_("Answer")]
-            #id_response.append(user_state[_("Answer ID")])
             if user_state[_("Answer")] == correct_answer:
                 aux_analytics['correct'].append(user_state[_("Answer ID")])
             else:
