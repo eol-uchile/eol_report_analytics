@@ -309,11 +309,11 @@ class EolReportAnalyticsView(View):
         csvwriter.writerow([])
         csvwriter.writerow(['','','%'])
         csvwriter.writerow(['Usuarios inscritos', len(students)])
-        csvwriter.writerow(['Cuantos contestaron', analytics['users'], float(analytics['users']/len(students))])
-        csvwriter.writerow(['Cuantos no contestaron', len(students) - analytics['users'], float((len(students) - analytics['users'])/len(students))])
+        csvwriter.writerow(['Cuantos contestaron', analytics['users'], str(float(analytics['users']/len(students))).replace(".",",")])
+        csvwriter.writerow(['Cuantos no contestaron', len(students) - analytics['users'], str(float((len(students) - analytics['users'])/len(students))).replace(".",",")])
         if analytics['score']:
-            csvwriter.writerow(['Promedio', mean(analytics['score'])])
-            csvwriter.writerow(['Desviacion estandar', pstdev(analytics['score'])])
+            csvwriter.writerow(['Promedio', str(mean(analytics['score'])).replace(".",",")])
+            csvwriter.writerow(['Desviacion estandar', str(pstdev(analytics['score'])).replace(".",",")])
         else:
             csvwriter.writerow(['Promedio', 0])
             csvwriter.writerow(['Desviacion estandar', ''])
@@ -345,20 +345,20 @@ class EolReportAnalyticsView(View):
                 aux[1] = aux[1] + 'P{} - '.format(aux_headers.index(idq) + 1)
             aux[1] = aux[1][:-3]
             aux[2] = mcq[1]
-            aux[3] = (mcq[1] / analytics['users'])
+            aux[3] = str(mcq[1] / analytics['users']).replace(".",",")
             if len(mcq[0]) > 0:
                 aux[4] = analytics['incorrect'][mcq[0][0]] if mcq[0][0] in analytics['incorrect'] else '0'
-                aux[5] = (analytics['incorrect'][mcq[0][0]] / analytics['users']) if mcq[0][0] in analytics['incorrect'] else '0'
+                aux[5] = str(analytics['incorrect'][mcq[0][0]] / analytics['users']).replace(".",",") if mcq[0][0] in analytics['incorrect'] else '0'
             csvwriter.writerow(aux)
             aux = ['Pregunta con menos correctas', '', 0, 0, 0, 0]
             for idq in lcq[0]:
                 aux[1] = aux[1] + 'P{} - '.format(aux_headers.index(idq) + 1)
             aux[1] = aux[1][:-3]
             aux[4] = lcq[1]
-            aux[5] = (lcq[1] / analytics['users'])
+            aux[5] = str(lcq[1] / analytics['users']).replace(".",",")
             if len(lcq[0]) > 0:
                 aux[2] = analytics['correct'][lcq[0][0]] if lcq[0][0] in analytics['correct'] else '0'
-                aux[3] = (analytics['correct'][lcq[0][0]] / analytics['users']) if lcq[0][0] in analytics['correct'] else '0'
+                aux[3] = str(analytics['correct'][lcq[0][0]] / analytics['users']).replace(".",",") if lcq[0][0] in analytics['correct'] else '0'
             csvwriter.writerow(aux)
             csvwriter.writerow([])
             csvwriter.writerow([])
@@ -372,17 +372,17 @@ class EolReportAnalyticsView(View):
                     questions[aux_headers[x]]['correct']
                 ]
                 if aux_headers[x] in analytics['correct']:
-                    row.append(analytics['correct'][aux_headers[x]] / analytics['users'])
-                    row.append(analytics['correct'][aux_headers[x]] / analytics['users'])
+                    row.append(str(analytics['correct'][aux_headers[x]] / analytics['users']).replace(".",","))
+                    row.append(str(analytics['correct'][aux_headers[x]] / analytics['users']).replace(".",","))
                 else:
                     row.append(0)
                     row.append(0)
                 if aux_headers[x] in analytics['incorrect']:
-                    row.append(analytics['incorrect'][aux_headers[x]] / analytics['users'])
+                    row.append(str(analytics['incorrect'][aux_headers[x]] / analytics['users']).replace(".",","))
                 else:
                     row.append(0)
                 if int(analytics['users']/4) != 0:
-                    row.append((best.get(aux_headers[x], 0) - worst.get(aux_headers[x], 0)) / int(analytics['users']/4))
+                    row.append(str((best.get(aux_headers[x], 0) - worst.get(aux_headers[x], 0)) / int(analytics['users']/4)).replace(".",","))
                 csvwriter.writerow(_get_utf8_encoded_rows(row))
         return csvwriter
 
@@ -451,9 +451,9 @@ class EolReportAnalyticsView(View):
                 break
             for user_state in generated_report_data[username]:
                 if _("Correct Answer") in user_state:
-                    questions[user_state[_("Answer ID")]] = {'question':user_state[_("Question")], 'correct':user_state[_("Correct Answer")]}
+                    questions[user_state[_("Answer ID")]] = {'question':user_state[_("Question")].replace(";",""), 'correct':user_state[_("Correct Answer")].replace(";","")}
                 else:
-                    questions[user_state[_("Answer ID")]] = {'question':user_state[_("Question")], 'correct':''}
+                    questions[user_state[_("Answer ID")]] = {'question':user_state[_("Question")].replace(";",""), 'correct':''}
         return questions
 
     def set_data(self, response, students, user_states, questions_ids):
@@ -479,9 +479,9 @@ class EolReportAnalyticsView(View):
         for user_state in user_states:
             correct_answer = ''
             if _("Correct Answer") in user_state:
-                correct_answer = user_state[_("Correct Answer")]
-            aux_response[user_state[_("Answer ID")]] = user_state[_("Answer")]
-            if user_state[_("Answer")] == correct_answer:
+                correct_answer = user_state[_("Correct Answer")].replace(";","")
+            aux_response[user_state[_("Answer ID")]] = user_state[_("Answer")].replace(";","")
+            if user_state[_("Answer")].replace(";","") == correct_answer:
                 aux_analytics['correct'].append(user_state[_("Answer ID")])
             else:
                 aux_analytics['incorrect'].append(user_state[_("Answer ID")])
@@ -490,7 +490,7 @@ class EolReportAnalyticsView(View):
         responses.append(raw_state['score']['raw_earned'])
         responses.append(raw_state['score']['raw_possible'])
         aux_analytics['score'] = float(raw_state['score']['raw_earned'])/float(raw_state['score']['raw_possible'])
-        responses.append(float(raw_state['score']['raw_earned'])/float(raw_state['score']['raw_possible']))
+        responses.append(str(float(raw_state['score']['raw_earned'])/float(raw_state['score']['raw_possible'])).replace(".",","))
         return responses, aux_analytics
 
     def get_all_enrolled_users(self, course_key):
