@@ -195,8 +195,8 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             'Pregunta con mas correctas;P1;2;1.0;0;0',
             'Pregunta con menos correctas;P2;0;0;2;1.0',
             'Preguntas;;Respuesta;Indice de dificultad;% de correctas;% de incorrectas;Indice discriminatorio',
-            'Pregunta 1;question_text_1;correct_answer_text_1;4;1.0;0;0',
-            'Pregunta 2;question_text_2;correct_answer_text_2;;0;1.0;0',
+            'Pregunta 1;question_text_1;correct_answer_text_1;1.0;1.0;0',
+            'Pregunta 2;question_text_2;correct_answer_text_2;0;0;1.0',
             ]
         self._verify_csv_file_report(report_store, expected_data)
 
@@ -287,8 +287,8 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             'Pregunta con mas correctas;P1 - P2;2;1.0;0;0',
             'Pregunta con menos correctas;;0;0;0;0',
             'Preguntas;;Respuesta;Indice de dificultad;% de correctas;% de incorrectas;Indice discriminatorio',
-            'Pregunta 1;question_text_1;correct_answer_text_1;4;1.0;0;0',
-            'Pregunta 2;question_text_2;correct_answer_text_2;4;1.0;0;0',
+            'Pregunta 1;question_text_1;correct_answer_text_1;1.0;1.0;0',
+            'Pregunta 2;question_text_2;correct_answer_text_2;1.0;1.0;0',
             ]
         self._verify_csv_file_report(report_store, expected_data)
 
@@ -431,3 +431,81 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
         r = json.loads(response._container[0].decode())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(r['status'], 'La analitica de preguntas esta siendo creado, en un momento estará disponible para descargar.')
+    
+    def test_order_best_quartile(self):
+        """
+            test order_best_quartile
+        """
+        scores = [1,1,1,1,1,1,0.75,1,0.75,1,0.75,1,1,1,1,1,1,1,1,1,1,0.75,1,1,1,1,1,1,1,1,1,1,1,1,0.75,0.75,1,0.5,1,1,1,0.25,1,1,1,1,1,1,0.75,0.75,1,1,1,0.75,1,1,1,0.75,1,1,1,1,0.75]
+        quartile = int(len(scores) / 4)
+        best_quartile = defaultdict(list)
+        best_quartile_list = []
+        for x in scores:
+            aux_analytics = {'score': x, 'correct': ['a{}'.format(x)]}
+            best_quartile, best_quartile_list = EolReportAnalyticsView().order_best_quartile(best_quartile, best_quartile_list, quartile, aux_analytics)
+        expected_best_quartile = defaultdict(list)
+        expected_best_quartile[1] = [['a1'],['a1'],['a1'],['a1'],['a1'],['a1'],['a1'],['a1'],['a1'],['a1'],['a1'],['a1'],['a1'],['a1'],['a1']]
+        self.assertEqual(best_quartile, expected_best_quartile)
+        self.assertEqual(best_quartile_list, [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
+
+    def test_order_worst_quartile(self):
+        """
+            test order_worst_quartile
+        """
+        scores = [1,1,1,1,1,1,0.75,1,0.75,1,0.75,1,1,1,1,1,1,1,1,1,1,0.75,1,1,1,1,1,1,1,1,1,1,1,1,0.75,0.75,1,0.5,1,1,1,0.25,1,1,1,1,1,1,0.75,0.75,1,1,1,0.75,1,1,1,0.75,1,1,1,1,0.75]
+        quartile = int(len(scores) / 4)
+        worst_quartile = defaultdict(list)
+        worst_quartile_list = []
+        for x in scores:
+            aux_analytics = {'score': x, 'correct': ['a{}'.format(x)]}
+            worst_quartile, worst_quartile_list = EolReportAnalyticsView().order_worst_quartile(worst_quartile, worst_quartile_list, quartile, aux_analytics)
+        expected_worst_quartile = defaultdict(list)
+        expected_worst_quartile[1] = [['a1'],['a1']]
+        expected_worst_quartile[0.75] = [['a0.75'],['a0.75'],['a0.75'],['a0.75'],['a0.75'],['a0.75'],['a0.75'],['a0.75'],['a0.75'],['a0.75'],['a0.75']]
+        expected_worst_quartile[0.5] = [['a0.5']]
+        expected_worst_quartile[0.25] = [['a0.25']]
+        self.assertEqual(worst_quartile, expected_worst_quartile)
+        self.assertEqual(worst_quartile_list, [0.25,0.5,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,1,1])
+    
+    def test_get_discriminatory_index(self):
+        """
+            test get_discriminatory_index
+        """
+        scores = [1,1,1,1,1,1,0.75,1,0.75,1,0.75,1,1,1,1,1,1,1,1,1,1,0.75,1,1,1,1,1,1,1,1,1,1,1,1,0.75,0.75,1,0.5,1,1,1,0.25,1,1,1,1,1,1,0.75,0.75,1,1,1,0.75,1,1,1,0.75,1,1,1,1,0.75]
+        quartile = int(len(scores) / 4)
+        best_quartile = defaultdict(list)
+        best_quartile[1] = [['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d']]
+        worst_quartile = defaultdict(list)
+        worst_quartile[1] = [['a','b','c','d'],['a','b','c','d']]
+        worst_quartile[0.75] = [['b','c','d'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c']]
+        worst_quartile[0.5] = [['b','c']]
+        worst_quartile[0.25] = [['c']]
+        best_quartile_list = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        worst_quartile_list = [0.25,0.5,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,1,1]
+        best, worst = EolReportAnalyticsView().get_discriminatory_index(best_quartile, best_quartile_list, worst_quartile, worst_quartile_list, quartile, len(scores))
+        self.assertEqual((best.get('a', 0) - worst.get('a', 0)) / int(len(scores)/4), (15-12)/int(63/4))
+        self.assertEqual((best.get('b', 0) - worst.get('b', 0)) / int(len(scores)/4), (15-14)/int(63/4))
+        self.assertEqual((best.get('c', 0) - worst.get('c', 0)) / int(len(scores)/4), (15-15)/int(63/4))
+        self.assertEqual((best.get('d', 0) - worst.get('d', 0)) / int(len(scores)/4), (15-3)/int(63/4))
+    
+    def test_get_discriminatory_index_diff_quartile(self):
+        """
+            test get_discriminatory_index
+        """
+        scores = [1,1,1,1,1,1,0.75,1,0.75,1,0.75,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0.75,1,1,1,1,1,1,1,1,1,1,1,1,0.75,0.75,1,0.5,1,1,1,0.25,1,1,1,1,1,1,0.75,0.75,1,1,1,0.75,1,1,1,0.75,1,1,1,1,0.75]
+        quartile = int(len(scores) / 4)
+        answered = 63
+        best_quartile = defaultdict(list)
+        best_quartile[1] = [['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d']]
+        worst_quartile = defaultdict(list)
+        worst_quartile[1] = [['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d'],['a','b','c','d']]
+        worst_quartile[0.75] = [['b','c','d'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c'],['a','b','c']]
+        worst_quartile[0.5] = [['b','c']]
+        worst_quartile[0.25] = [['c']]
+        best_quartile_list = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        worst_quartile_list = [0.25,0.5,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75,1,1,1,1,1]
+        best, worst = EolReportAnalyticsView().get_discriminatory_index(best_quartile, best_quartile_list, worst_quartile, worst_quartile_list, quartile, 63)
+        self.assertEqual((best.get('a', 0) - worst.get('a', 0)) / int(answered/4), (15-12)/int(answered/4))
+        self.assertEqual((best.get('b', 0) - worst.get('b', 0)) / int(answered/4), (15-14)/int(answered/4))
+        self.assertEqual((best.get('c', 0) - worst.get('c', 0)) / int(answered/4), (15-15)/int(answered/4))
+        self.assertEqual((best.get('d', 0) - worst.get('d', 0)) / int(answered/4), (15-3)/int(answered/4))

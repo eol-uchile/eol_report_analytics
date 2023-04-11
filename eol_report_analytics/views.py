@@ -372,16 +372,17 @@ class EolReportAnalyticsView(View):
                     questions[aux_headers[x]]['correct']
                 ]
                 if aux_headers[x] in analytics['correct']:
-                    row.append(analytics['correct'][aux_headers[x]] * analytics['users'])
+                    row.append(analytics['correct'][aux_headers[x]] / analytics['users'])
                     row.append(analytics['correct'][aux_headers[x]] / analytics['users'])
                 else:
-                    row.append('')
+                    row.append(0)
                     row.append(0)
                 if aux_headers[x] in analytics['incorrect']:
                     row.append(analytics['incorrect'][aux_headers[x]] / analytics['users'])
                 else:
                     row.append(0)
-                row.append((best.get(aux_headers[x], 0) - worst.get(aux_headers[x], 0)) * int(analytics['users']))
+                if int(analytics['users']/4) != 0:
+                    row.append((best.get(aux_headers[x], 0) - worst.get(aux_headers[x], 0)) / int(analytics['users']/4))
                 csvwriter.writerow(_get_utf8_encoded_rows(row))
         return csvwriter
 
@@ -395,20 +396,12 @@ class EolReportAnalyticsView(View):
                     best_quartile[best_quartile_list[x]].pop()
                 else:
                     best_quartile.pop(best_quartile_list[x])
-            best_quartile_list = best_quartile_list[aux:]
-
-            for x in range(aux):
-                if len(best_quartile[best_quartile_list[x]]) > 1:
-                    best_quartile[best_quartile_list[x]].pop()
-                else:
-                    best_quartile.pop(best_quartile_list[x])
                 y = x + q
                 if len(worst_quartile[worst_quartile_list[y]]) > 1:
                     worst_quartile[worst_quartile_list[y]].pop()
                 else:
                     worst_quartile.pop(worst_quartile_list[y])
-            #best_quartile_list = best_quartile_list[aux:]
-            #worst_quartile_list = worst_quartile_list[:q]
+
         best = Counter(x for xs in best_quartile.values() for xq in xs for x in xq)
         worst = Counter(x for xs in worst_quartile.values() for xq in xs for x in xq)
         return best, worst
