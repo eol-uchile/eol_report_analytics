@@ -194,9 +194,9 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             'Desviacion estandar;0,16666666666666666',
             'Pregunta con mas correctas;P1;2;1,0;0;0',
             'Pregunta con menos correctas;P2;0;0;2;1,0',
-            'Preguntas;;Respuesta;Indice de dificultad;% de correctas;% de incorrectas;Indice discriminatorio',
-            'Pregunta 1;question_text_1;correct_answer_text_1;1,0;1,0;0',
-            'Pregunta 2;question_text_2;correct_answer_text_2;0;0;1,0',
+            'Preguntas;;Respuesta;Indice de dificultad;% de correctas;% de incorrectas;Rango indice discriminatorio;Indice discriminatorio',
+            'Pregunta 1;question_text_1;correct_answer_text_1;Muy fácil;1,0;0',
+            'Pregunta 2;question_text_2;correct_answer_text_2;Muy dificil;0;1,0',
             ]
         self._verify_csv_file_report(report_store, expected_data)
 
@@ -286,9 +286,9 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             'Desviacion estandar;0',
             'Pregunta con mas correctas;P1 - P2;2;1,0;0;0',
             'Pregunta con menos correctas;;0;0;0;0',
-            'Preguntas;;Respuesta;Indice de dificultad;% de correctas;% de incorrectas;Indice discriminatorio',
-            'Pregunta 1;question_text_1;correct_answer_text_1;1,0;1,0;0',
-            'Pregunta 2;question_text_2;correct_answer_text_2;1,0;1,0;0',
+            'Preguntas;;Respuesta;Indice de dificultad;% de correctas;% de incorrectas;Rango indice discriminatorio;Indice discriminatorio',
+            'Pregunta 1;question_text_1;correct_answer_text_1;Muy fácil;1,0;0',
+            'Pregunta 2;question_text_2;correct_answer_text_2;Muy fácil;1,0;0',
             ]
         self._verify_csv_file_report(report_store, expected_data)
 

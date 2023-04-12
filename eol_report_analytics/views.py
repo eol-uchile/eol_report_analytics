@@ -362,7 +362,7 @@ class EolReportAnalyticsView(View):
             csvwriter.writerow(aux)
             csvwriter.writerow([])
             csvwriter.writerow([])
-            csvwriter.writerow(_get_utf8_encoded_rows(['Preguntas', '', 'Respuesta','Indice de dificultad', '% de correctas', '% de incorrectas', 'Indice discriminatorio']))
+            csvwriter.writerow(_get_utf8_encoded_rows(['Preguntas', '', 'Respuesta','Indice de dificultad', '% de correctas', '% de incorrectas', 'Rango indice discriminatorio', 'Indice discriminatorio']))
             
             best, worst = self.get_discriminatory_index(best_quartile, best_quartile_list, worst_quartile, worst_quartile_list, quartile, analytics['users'])
             for x in range(len(aux_headers)):
@@ -372,17 +372,42 @@ class EolReportAnalyticsView(View):
                     questions[aux_headers[x]]['correct']
                 ]
                 if aux_headers[x] in analytics['correct']:
-                    row.append(str(analytics['correct'][aux_headers[x]] / analytics['users']).replace(".",","))
-                    row.append(str(analytics['correct'][aux_headers[x]] / analytics['users']).replace(".",","))
+                    aux = analytics['correct'][aux_headers[x]] / analytics['users']
+                    if aux >= 0.81 and aux <= 1:
+                        row.append("Muy fácil")
+                    elif aux >= 0.66 and aux <= 0.8:
+                        row.append("Relativamente fácil")
+                    elif aux >= 0.51 and aux <= 0.65:
+                        row.append("Dificultad adecuada")
+                    elif aux >= 0.31 and aux <= 0.5:
+                        row.append("Relativamente dificil")
+                    elif aux >= 0.11 and aux <= 0.3:
+                        row.append("Dificil")
+                    elif aux >= 0 and aux <= 0.1:
+                        row.append("Muy dificil")
+                    else:
+                        row.append("")
+                    row.append(str(aux).replace(".",","))
                 else:
-                    row.append(0)
+                    row.append("Muy dificil")
                     row.append(0)
                 if aux_headers[x] in analytics['incorrect']:
                     row.append(str(analytics['incorrect'][aux_headers[x]] / analytics['users']).replace(".",","))
                 else:
                     row.append(0)
                 if int(analytics['users']/4) != 0:
-                    row.append(str((best.get(aux_headers[x], 0) - worst.get(aux_headers[x], 0)) / int(analytics['users']/4)).replace(".",","))
+                    aux = (best.get(aux_headers[x], 0) - worst.get(aux_headers[x], 0)) / int(analytics['users']/4)
+                    if aux >= 0.4 and aux < 1:
+                        row.append("Excelente discriminación")
+                    elif aux > 0 and aux < 0.4:
+                        row.append("Medianamente discriminador")
+                    elif aux == 0 or aux == 1:
+                        row.append("Nula discriminación")
+                    elif aux >= -1 and aux < 0:
+                        row.append("Ítem a modificar")
+                    else:
+                        row.append("")
+                    row.append(str(aux).replace(".",","))
                 csvwriter.writerow(_get_utf8_encoded_rows(row))
         return csvwriter
 
