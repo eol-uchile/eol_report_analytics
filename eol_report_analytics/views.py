@@ -373,17 +373,17 @@ class EolReportAnalyticsView(View):
                 ]
                 if aux_headers[x] in analytics['correct']:
                     aux = analytics['correct'][aux_headers[x]] / analytics['users']
-                    if aux >= 0.81 and aux <= 1:
+                    if aux >= 0.8 and aux <= 1:
                         row.append("Muy fácil")
-                    elif aux >= 0.66 and aux <= 0.8:
+                    elif aux >= 0.65 and aux < 0.8:
                         row.append("Relativamente fácil")
-                    elif aux >= 0.51 and aux <= 0.65:
+                    elif aux >= 0.5 and aux < 0.65:
                         row.append("Dificultad adecuada")
-                    elif aux >= 0.31 and aux <= 0.5:
+                    elif aux >= 0.3 and aux < 0.5:
                         row.append("Relativamente dificil")
-                    elif aux >= 0.11 and aux <= 0.3:
+                    elif aux >= 0.1 and aux < 0.3:
                         row.append("Dificil")
-                    elif aux >= 0 and aux <= 0.1:
+                    elif aux >= 0 and aux < 0.1:
                         row.append("Muy dificil")
                     else:
                         row.append("")
