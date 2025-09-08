@@ -17,7 +17,6 @@ from time import time
 from capa.capa_problem import LoncapaProblem, LoncapaSystem
 from celery import task
 from django.contrib.auth.models import User
-from django.core.exceptions import FieldError
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.http import Http404, JsonResponse
@@ -25,6 +24,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _, ugettext_noop
 from django.views.generic.base import View
 from pytz import UTC
+from uchileedxlogin.services.interface import get_user_id_doc_id_pairs
 
 # Edx dependencies
 from common.djangoapps.util.file import course_filename_prefix_generator
@@ -244,7 +244,7 @@ class EolReportAnalyticsView(View):
         url_base = data['base_url']
         course_id = data['course']
         course_key = CourseKey.from_string(course_id)
-        header = ['Username', 'Email', 'Run', 'Intentos']
+        header = ['Username', 'Email', 'Documento_id', 'Intentos']
         analytics = {'users': 0, 'correct': {}, 'incorrect': {}, 'score': []}
         best_quartile = defaultdict(list)
         best_quartile_list = []
@@ -487,7 +487,7 @@ class EolReportAnalyticsView(View):
     def set_data(self, response, students, user_states, questions_ids):
         """
             Create a row according 
-            ['Username', 'Email', 'Run', 'Intentos', 'preg1', 'preg2, ... 'pregN' , 'Nota']
+            ['Username', 'Email', 'Documento_id', 'Intentos', 'preg1', 'preg2, ... 'pregN' , 'Nota']
         """
         aux_analytics = defaultdict(list)
         raw_state = json.loads(response['state'])
@@ -500,7 +500,7 @@ class EolReportAnalyticsView(View):
         responses = [
                 response['username'], 
                 students[response['username']]['email'], 
-                students[response['username']]['rut'],
+                students[response['username']]['doc_id'],
                 raw_state['attempts']
                 ]
         aux_response = {}
@@ -526,24 +526,17 @@ class EolReportAnalyticsView(View):
             Get all enrolled student 
         """
         students = OrderedDict()
-        try:
-            enrolled_students = User.objects.filter(
-                courseenrollment__course_id=course_key,
-                courseenrollment__is_active=1,
-                courseenrollment__mode='honor'
-            ).order_by('username').values('username', 'email', 'edxloginuser__run')
-        except FieldError:
-            enrolled_students = User.objects.filter(
-                courseenrollment__course_id=course_key,
-                courseenrollment__is_active=1,
-                courseenrollment__mode='honor'
-            ).order_by('username').values('username', 'email')
-        
+        enrolled_students = User.objects.filter(
+            courseenrollment__course_id=course_key,
+            courseenrollment__is_active=1,
+            courseenrollment__mode='honor'
+        ).order_by('username').values('id', 'username', 'email')
+        user_id_list = enrolled_students.values_list('id', flat=True)
+        user_doc_id = get_user_id_doc_id_pairs(user_id_list)
+        user_doc_id_dict = {id: doc_id for id, doc_id in user_doc_id}
         for user in enrolled_students:
-            run = ''
-            if 'edxloginuser__run' in user and user['edxloginuser__run'] != None:
-                run = user['edxloginuser__run']
-            students[user['username']] = {'email': user['email'], 'rut': run}
+            doc_id = user_doc_id_dict.get(user['id'], '')
+            students[user['username']] = {'email': user['email'], 'doc_id': doc_id}
         return students
 
     def get_report_xblock(self, block_key, user_states, block):
