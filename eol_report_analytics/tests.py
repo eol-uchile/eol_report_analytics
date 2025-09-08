@@ -13,6 +13,7 @@ from mock import patch, Mock
 # Edx dependencies
 from common.djangoapps.student.tests.factories import CourseAccessRoleFactory, UserFactory, CourseEnrollmentFactory
 from common.djangoapps.student.roles import CourseInstructorRole
+from lms.djangoapps.courseware.models import StudentModule
 from opaque_keys.edx.keys import UsageKey
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -100,12 +101,14 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(request['PATH_INFO'], '/eol_report_analytics/data')
     
+    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
     @patch("eol_report_analytics.views.modulestore")
     @patch("eol_report_analytics.views.EolReportAnalyticsView.get_report_xblock")
-    def test_eol_report_analytics_get_all_data(self, report, store_mock):
+    def test_eol_report_analytics_get_all_data(self, report, store_mock, mock_user_id_doc_id_pairs):
         """
             Test eol_report_analytics view data
         """
+        mock_user_id_doc_id_pairs.return_value = [(self.student.id, '09472337K')]
         u1_state_1 = {_("Answer ID"): 'answer_id_1',
             _("Question"): 'question_text_1',
             _("Answer"): 'correct_answer_text_1',
@@ -132,7 +135,6 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             }               
         report.return_value = generated_report_data
         store_mock = Mock()
-        from lms.djangoapps.courseware.models import StudentModule
         data = {'block': self.block_id, 'course': str(self.course.id), 'base_url':'this_is_a_url'}
         task_input = {'data': data }
         usage_key = UsageKey.from_string(self.block_id)
@@ -156,11 +158,11 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
                 task_input, 'Eol_Report_Analytics'
             )
         report_store = ReportStore.from_config(config_name='GRADES_DOWNLOAD')
-        header_row = ";".join(['Username', 'Email', 'Run', 'Intentos', 'Pregunta 1', 'Pregunta 2', 'Ptos Obtenidos', 'Tolal de la Pregunta', 'Nota'])
+        header_row = ";".join(['Username', 'Email', 'Documento_id', 'Intentos', 'Pregunta 1', 'Pregunta 2', 'Ptos Obtenidos', 'Tolal de la Pregunta', 'Nota'])
         student_row1 = ";".join([
             self.student.username,
             self.student.email,
-            '',
+            '09472337K',
             '1',
             u1_state_1[_("Answer")],
             u1_state_2[_("Answer")],
@@ -192,12 +194,35 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             ]
         self._verify_csv_file_report(report_store, expected_data)
 
+    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
+    def test_get_enrolled_users_with_doc_id(self, mock_user_id_doc_id_pairs):
+        """
+            Test that doc_id is being added correctly to enrolled users, in the case when one of the
+            students has a doc_id associated to it.
+        """
+        mock_user_id_doc_id_pairs.return_value = [(self.student.id, '09472337K')]
+        enrolled_users = EolReportAnalyticsView().get_all_enrolled_users(self.course.id)
+        self.assertEqual(enrolled_users[self.student.username]['doc_id'], '09472337K')
+        self.assertEqual(enrolled_users[self.student2.username]['doc_id'], '')
+
+    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
+    def test_get_enrolled_users_without_doc_id(self, mock_user_id_doc_id_pairs):
+        """
+            Test that doc_id is being set correctly in the case when no user has a doc_id associated.
+        """
+        mock_user_id_doc_id_pairs.return_value = []
+        enrolled_users = EolReportAnalyticsView().get_all_enrolled_users(self.course.id)
+        self.assertEqual(enrolled_users[self.student.username]['doc_id'], '')
+        self.assertEqual(enrolled_users[self.student2.username]['doc_id'], '')
+
+    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
     @patch("eol_report_analytics.views.modulestore")
     @patch("eol_report_analytics.views.EolReportAnalyticsView.get_report_xblock")
-    def test_eol_report_analytics_get_all_data_correct(self, report, store_mock):
+    def test_eol_report_analytics_get_all_data_correct(self, report, store_mock, mock_user_id_doc_id_pairs):
         """
             Test eol_report_analytics view data
         """
+        mock_user_id_doc_id_pairs.return_value = []
         u1_state_1 = {_("Answer ID"): 'answer_id_1',
             _("Question"): 'question_text_1',
             _("Answer"): 'correct_answer_text_1',
@@ -224,7 +249,6 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             }               
         report.return_value = generated_report_data
         store_mock = Mock()
-        from lms.djangoapps.courseware.models import StudentModule
         data = {'block': self.block_id, 'course': str(self.course.id), 'base_url':'this_is_a_url'}
         task_input = {'data': data }
         usage_key = UsageKey.from_string(self.block_id)
@@ -248,7 +272,7 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
                 task_input, 'Eol_Report_Analytics'
             )
         report_store = ReportStore.from_config(config_name='GRADES_DOWNLOAD')
-        header_row = ";".join(['Username', 'Email', 'Run', 'Intentos', 'Pregunta 1', 'Pregunta 2', 'Ptos Obtenidos', 'Tolal de la Pregunta', 'Nota'])
+        header_row = ";".join(['Username', 'Email', 'Documento_id', 'Intentos', 'Pregunta 1', 'Pregunta 2', 'Ptos Obtenidos', 'Tolal de la Pregunta', 'Nota'])
         student_row1 = ";".join([
             self.student.username,
             self.student.email,
@@ -293,7 +317,6 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
         generated_report_data = defaultdict(list)            
         report.return_value = generated_report_data
         store_mock = Mock()
-        from lms.djangoapps.courseware.models import StudentModule
         data = {'block': self.block_id, 'course': str(self.course.id), 'base_url':'this_is_a_url'}
         task_input = {'data': data}
         usage_key = UsageKey.from_string(self.block_id)
