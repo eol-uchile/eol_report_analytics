@@ -1,5 +1,9 @@
 # Eol Report Analytics
 
+![Coverage Status](/coverage-badge.svg)
+
+![https://github.com/eol-uchile/eol_report_analytics/actions](https://github.com/eol-uchile/eol_report_analytics/workflows/Python%20application/badge.svg)
+
 Question report in CSV.
 
 # Install
