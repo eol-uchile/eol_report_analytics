@@ -44,6 +44,9 @@ from xmodule.modulestore.exceptions import ItemNotFoundError
 
 logger = logging.getLogger(__name__)
 
+def safe_div(num, den):
+    return num / den if den else 0
+
 def task_process_data(request, data):
     course_key = CourseKey.from_string(data['course'])
     task_type = 'Eol_Report_Analytics'
@@ -306,14 +309,19 @@ class EolReportAnalyticsView(View):
                                     worst_quartile, worst_quartile_list = self.order_worst_quartile(worst_quartile, worst_quartile_list, quartile, aux_analytics)
 
         #Analytics Here!
+        n_total_students = len(students)
+        n_students_answered = analytics['users']
+        n_students_not_answered = n_total_students - n_students_answered
+        pct_answered = safe_div(n_students_answered, n_total_students)
+        pct_not_answered = safe_div(n_students_not_answered, n_total_students)
         csvwriter.writerow([])
         csvwriter.writerow([])
         csvwriter.writerow(['Analitica'])
         csvwriter.writerow([])
         csvwriter.writerow(['','','%'])
-        csvwriter.writerow(['Usuarios inscritos', len(students)])
-        csvwriter.writerow(['Cuantos contestaron', analytics['users'], str(float(analytics['users']/len(students))).replace(".",",")])
-        csvwriter.writerow(['Cuantos no contestaron', len(students) - analytics['users'], str(float((len(students) - analytics['users'])/len(students))).replace(".",",")])
+        csvwriter.writerow(['Usuarios inscritos', n_total_students])
+        csvwriter.writerow(['Cuantos contestaron', n_students_answered, str(pct_answered).replace(".", ",")])
+        csvwriter.writerow(['Cuantos no contestaron', n_students_not_answered, str(pct_not_answered).replace(".", ",")])
         if analytics['score']:
             csvwriter.writerow(['Promedio', str(mean(analytics['score'])).replace(".",",")])
             csvwriter.writerow(['Desviacion estandar', str(pstdev(analytics['score'])).replace(".",",")])
