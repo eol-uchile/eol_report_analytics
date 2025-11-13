@@ -11,6 +11,7 @@ from django.utils.translation import gettext as _
 from mock import patch, Mock
 
 # Edx dependencies
+from common.djangoapps.student.models import CourseEnrollment
 from common.djangoapps.student.tests.factories import CourseAccessRoleFactory, UserFactory, CourseEnrollmentFactory
 from common.djangoapps.student.roles import CourseInstructorRole
 from lms.djangoapps.courseware.models import StudentModule
@@ -339,6 +340,41 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             'Promedio;0',
             'Desviacion estandar'
             ]
+        self._verify_csv_file_report(report_store, expected_data)
+    
+    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
+    @patch("eol_report_analytics.views.modulestore")
+    @patch("eol_report_analytics.views.EolReportAnalyticsView.get_report_xblock")
+    def test_eol_report_analytics_no_enrolled_users(self, report, store_mock, mock_user_id_doc_id_pairs):
+        """
+            Test eol_report_analytics view to a problem block in a course without students enrolled
+        """
+        mock_user_id_doc_id_pairs.return_value = []
+        CourseEnrollment.objects.filter(course_id=self.course.id).delete()
+        generated_report_data = defaultdict(list)
+        report.return_value = generated_report_data
+        store_mock = Mock()
+        data = {
+            'block': self.block_id,
+            'course': str(self.course.id),
+            'base_url': 'this_is_a_url',
+        }
+        task_input = {'data': data}
+        with patch('lms.djangoapps.instructor_task.tasks_helper.runner._get_current_task'):
+            result = generate(
+                None, None, self.course.id,
+                task_input, 'Eol_Report_Analytics'
+            )
+
+        report_store = ReportStore.from_config(config_name='GRADES_DOWNLOAD')
+        expected_data = [
+            'Analitica',
+            'Usuarios inscritos;0',
+            'Cuantos contestaron;0',
+            'Cuantos no contestaron;0',
+            'Promedio;0',
+            'Desviacion estandar;',
+        ]
         self._verify_csv_file_report(report_store, expected_data)
 
     @patch("eol_report_analytics.views.modulestore")
