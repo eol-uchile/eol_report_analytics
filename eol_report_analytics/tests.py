@@ -102,14 +102,14 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(request['PATH_INFO'], '/eol_report_analytics/data')
     
-    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
+    @patch("eol_report_analytics.views.get_user_id_with_indiv_id_list")
     @patch("eol_report_analytics.views.modulestore")
     @patch("eol_report_analytics.views.EolReportAnalyticsView.get_report_xblock")
-    def test_eol_report_analytics_get_all_data(self, report, store_mock, mock_user_id_doc_id_pairs):
+    def test_eol_report_analytics_get_all_data(self, report, store_mock, mock_user_id_with_indiv_id_list):
         """
             Test eol_report_analytics view data
         """
-        mock_user_id_doc_id_pairs.return_value = [(self.student.id, '09472337K')]
+        mock_user_id_with_indiv_id_list.return_value = [(self.student.id, '09472337K')]
         u1_state_1 = {_("Answer ID"): 'answer_id_1',
             _("Question"): 'question_text_1',
             _("Answer"): 'correct_answer_text_1',
@@ -195,35 +195,35 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             ]
         self._verify_csv_file_report(report_store, expected_data)
 
-    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
-    def test_get_enrolled_users_with_doc_id(self, mock_user_id_doc_id_pairs):
+    @patch("eol_report_analytics.views.get_user_id_with_indiv_id_list")
+    def test_get_enrolled_users_with_indiv_id(self, mock_user_id_with_indiv_id_list):
         """
-            Test that doc_id is being added correctly to enrolled users, in the case when one of the
-            students has a doc_id associated to it.
+            Test that indiv_id is being added correctly to enrolled users, in the case when one of the
+            students has a indiv_id associated to it.
         """
-        mock_user_id_doc_id_pairs.return_value = [(self.student.id, '09472337K')]
+        mock_user_id_with_indiv_id_list.return_value = [(self.student.id, '09472337K')]
         enrolled_users = EolReportAnalyticsView().get_all_enrolled_users(self.course.id)
-        self.assertEqual(enrolled_users[self.student.username]['doc_id'], '09472337K')
-        self.assertEqual(enrolled_users[self.student2.username]['doc_id'], '')
+        self.assertEqual(enrolled_users[self.student.username]['indiv_id'], '09472337K')
+        self.assertEqual(enrolled_users[self.student2.username]['indiv_id'], '')
 
-    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
-    def test_get_enrolled_users_without_doc_id(self, mock_user_id_doc_id_pairs):
+    @patch("eol_report_analytics.views.get_user_id_with_indiv_id_list")
+    def test_get_enrolled_users_without_indiv_id(self, mock_user_id_with_indiv_id_list):
         """
-            Test that doc_id is being set correctly in the case when no user has a doc_id associated.
+            Test that indiv_id is being set correctly in the case when no user has a indiv_id associated.
         """
-        mock_user_id_doc_id_pairs.return_value = []
+        mock_user_id_with_indiv_id_list.return_value = []
         enrolled_users = EolReportAnalyticsView().get_all_enrolled_users(self.course.id)
-        self.assertEqual(enrolled_users[self.student.username]['doc_id'], '')
-        self.assertEqual(enrolled_users[self.student2.username]['doc_id'], '')
+        self.assertEqual(enrolled_users[self.student.username]['indiv_id'], '')
+        self.assertEqual(enrolled_users[self.student2.username]['indiv_id'], '')
 
-    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
+    @patch("eol_report_analytics.views.get_user_id_with_indiv_id_list")
     @patch("eol_report_analytics.views.modulestore")
     @patch("eol_report_analytics.views.EolReportAnalyticsView.get_report_xblock")
-    def test_eol_report_analytics_get_all_data_correct(self, report, store_mock, mock_user_id_doc_id_pairs):
+    def test_eol_report_analytics_get_all_data_correct(self, report, store_mock, mock_user_id_with_indiv_id_list):
         """
             Test eol_report_analytics view data
         """
-        mock_user_id_doc_id_pairs.return_value = []
+        mock_user_id_with_indiv_id_list.return_value = []
         u1_state_1 = {_("Answer ID"): 'answer_id_1',
             _("Question"): 'question_text_1',
             _("Answer"): 'correct_answer_text_1',
