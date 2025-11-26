@@ -24,7 +24,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _, ugettext_noop
 from django.views.generic.base import View
 from pytz import UTC
-from uchileedxlogin.services.interface import get_user_id_doc_id_pairs
+from eol_sso.services.interface import get_user_id_with_indiv_id_list
 
 # Edx dependencies
 from common.djangoapps.util.file import course_filename_prefix_generator
@@ -500,7 +500,7 @@ class EolReportAnalyticsView(View):
         responses = [
                 response['username'], 
                 students[response['username']]['email'], 
-                students[response['username']]['doc_id'],
+                students[response['username']]['indiv_id'],
                 raw_state['attempts']
                 ]
         aux_response = {}
@@ -532,11 +532,11 @@ class EolReportAnalyticsView(View):
             courseenrollment__mode='honor'
         ).order_by('username').values('id', 'username', 'email')
         user_id_list = enrolled_students.values_list('id', flat=True)
-        user_doc_id = get_user_id_doc_id_pairs(user_id_list)
-        user_doc_id_dict = {id: doc_id for id, doc_id in user_doc_id}
+        user_indiv_id_list = get_user_id_with_indiv_id_list(user_id_list)
+        user_indiv_id_dict = {id: indiv_id for id, indiv_id in user_indiv_id_list}
         for user in enrolled_students:
-            doc_id = user_doc_id_dict.get(user['id'], '')
-            students[user['username']] = {'email': user['email'], 'doc_id': doc_id}
+            indiv_id = user_indiv_id_dict.get(user['id'], '')
+            students[user['username']] = {'email': user['email'], 'indiv_id': indiv_id}
         return students
 
     def get_report_xblock(self, block_key, user_states, block):
