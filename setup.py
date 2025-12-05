@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="eol_report_analytics",
-    version="2.0.0",
+    version="2.0.1",
     author="Oficina EOL UChile",
     author_email="eol-ing@uchile.cl",
     description=".",
