@@ -336,20 +336,18 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
         report_store = ReportStore.from_config(config_name='GRADES_DOWNLOAD')
         expected_data = [
             'Cuantos contestaron;0',
-            'Cuantos no contestaron;2',
-            'Promedio;0',
-            'Desviacion estandar'
+            'Cuantos no contestaron;2'
             ]
         self._verify_csv_file_report(report_store, expected_data)
     
-    @patch("eol_report_analytics.views.get_user_id_doc_id_pairs")
+    @patch("eol_report_analytics.views.get_user_id_with_indiv_id_list")
     @patch("eol_report_analytics.views.modulestore")
     @patch("eol_report_analytics.views.EolReportAnalyticsView.get_report_xblock")
-    def test_eol_report_analytics_no_enrolled_users(self, report, store_mock, mock_user_id_doc_id_pairs):
+    def test_eol_report_analytics_no_enrolled_users(self, report, store_mock, mock_user_id_with_indiv_id_list):
         """
             Test eol_report_analytics view to a problem block in a course without students enrolled
         """
-        mock_user_id_doc_id_pairs.return_value = []
+        mock_user_id_with_indiv_id_list.return_value = []
         CourseEnrollment.objects.filter(course_id=self.course.id).delete()
         generated_report_data = defaultdict(list)
         report.return_value = generated_report_data
@@ -371,9 +369,7 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             'Analitica',
             'Usuarios inscritos;0',
             'Cuantos contestaron;0',
-            'Cuantos no contestaron;0',
-            'Promedio;0',
-            'Desviacion estandar;',
+            'Cuantos no contestaron;0'
         ]
         self._verify_csv_file_report(report_store, expected_data)
 
