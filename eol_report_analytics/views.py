@@ -322,6 +322,10 @@ class EolReportAnalyticsView(View):
         csvwriter.writerow(['Usuarios inscritos', n_total_students])
         csvwriter.writerow(['Cuantos contestaron', n_students_answered, str(pct_answered).replace(".", ",")])
         csvwriter.writerow(['Cuantos no contestaron', n_students_not_answered, str(pct_not_answered).replace(".", ",")])
+        # If there are no responses from students (honor users) in the problem xblock, return
+        # before doing further analytics.
+        if analytics['users'] == 0:
+            return csvwriter
         if analytics['score']:
             csvwriter.writerow(['Promedio', str(mean(analytics['score'])).replace(".",",")])
             csvwriter.writerow(['Desviacion estandar', str(pstdev(analytics['score'])).replace(".",",")])
