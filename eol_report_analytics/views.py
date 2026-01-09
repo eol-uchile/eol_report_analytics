@@ -21,7 +21,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.urls import reverse
-from django.utils.translation import gettext as _, ugettext_noop
+from django.utils.translation import ugettext_noop
 from django.views.generic.base import View
 from pytz import UTC
 from eol_sso.services.interface import get_user_id_with_indiv_id_list
@@ -490,10 +490,10 @@ class EolReportAnalyticsView(View):
             if questions:
                 break
             for user_state in generated_report_data[username]:
-                if _("Correct Answer") in user_state:
-                    questions[user_state[_("Answer ID")]] = {'question':user_state[_("Question")].replace(";",""), 'correct':user_state[_("Correct Answer")].replace(";","")}
+                if "Correct Answer" in user_state:
+                    questions[user_state["Answer ID"]] = {'question':user_state["Question"].replace(";",""), 'correct':user_state["Correct Answer"].replace(";","")}
                 else:
-                    questions[user_state[_("Answer ID")]] = {'question':user_state[_("Question")].replace(";",""), 'correct':''}
+                    questions[user_state["Answer ID"]] = {'question':user_state["Question"].replace(";",""), 'correct':''}
         return questions
 
     def set_data(self, response, students, user_states, questions_ids):
@@ -518,13 +518,13 @@ class EolReportAnalyticsView(View):
         aux_response = {}
         for user_state in user_states:
             correct_answer = ''
-            if _("Correct Answer") in user_state:
-                correct_answer = user_state[_("Correct Answer")].replace(";","")
-            aux_response[user_state[_("Answer ID")]] = user_state[_("Answer")].replace(";","")
-            if user_state[_("Answer")].replace(";","") == correct_answer:
-                aux_analytics['correct'].append(user_state[_("Answer ID")])
+            if "Correct Answer" in user_state:
+                correct_answer = user_state["Correct Answer"].replace(";","")
+            aux_response[user_state["Answer ID"]] = user_state["Answer"].replace(";","")
+            if user_state["Answer"].replace(";","") == correct_answer:
+                aux_analytics['correct'].append(user_state["Answer ID"])
             else:
-                aux_analytics['incorrect'].append(user_state[_("Answer ID")])
+                aux_analytics['incorrect'].append(user_state["Answer ID"])
         for x in questions_ids:
             responses.append(aux_response[x])
         responses.append(raw_state['score']['raw_earned'])
@@ -647,10 +647,10 @@ class EolReportAnalyticsView(View):
                 correct_answer_text = lcp.find_correct_answer_text(answer_id)
 
                 report = {
-                    _("Answer ID"): answer_id,
-                    _("Question"): question_text,
-                    _("Answer"): answer_text,
+                    "Answer ID": answer_id,
+                    "Question": question_text,
+                    "Answer": answer_text,
                 }
                 if correct_answer_text is not None:
-                    report[_("Correct Answer")] = correct_answer_text
+                    report["Correct Answer"] = correct_answer_text
                 yield (response['username'], report)

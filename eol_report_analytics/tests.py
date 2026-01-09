@@ -7,7 +7,6 @@ import json
 # Installed packages (via pip)
 from django.test import Client
 from django.urls import reverse
-from django.utils.translation import gettext as _
 from mock import patch, Mock
 
 # Edx dependencies
@@ -110,25 +109,25 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             Test eol_report_analytics view data
         """
         mock_user_id_with_indiv_id_list.return_value = [(self.student.id, '09472337K')]
-        u1_state_1 = {_("Answer ID"): 'answer_id_1',
-            _("Question"): 'question_text_1',
-            _("Answer"): 'correct_answer_text_1',
-            _("Correct Answer") : 'correct_answer_text_1'
+        u1_state_1 = {"Answer ID": 'answer_id_1',
+            "Question": 'question_text_1',
+            "Answer": 'correct_answer_text_1',
+            "Correct Answer" : 'correct_answer_text_1'
             }
-        u1_state_2 = {_("Answer ID"): 'answer_id_2',
-            _("Question"): 'question_text_2',
-            _("Answer"): 'asdadsadsa',
-            _("Correct Answer") : 'correct_answer_text_2'
+        u1_state_2 = {"Answer ID": 'answer_id_2',
+            "Question": 'question_text_2',
+            "Answer": 'asdadsadsa',
+            "Correct Answer" : 'correct_answer_text_2'
             }
-        u2_state_1 = {_("Answer ID"): 'answer_id_1',
-            _("Question"): 'question_text_1',
-            _("Answer"): 'correct_answer_text_1',
-            _("Correct Answer") : 'correct_answer_text_1'
+        u2_state_1 = {"Answer ID": 'answer_id_1',
+            "Question": 'question_text_1',
+            "Answer": 'correct_answer_text_1',
+            "Correct Answer" : 'correct_answer_text_1'
             }
-        u2_state_2 = {_("Answer ID"): 'answer_id_2',
-            _("Question"): 'question_text_2',
-            _("Answer"): 'correct_answer_text_4',
-            _("Correct Answer") : 'correct_answer_text_2'
+        u2_state_2 = {"Answer ID": 'answer_id_2',
+            "Question": 'question_text_2',
+            "Answer": 'correct_answer_text_4',
+            "Correct Answer" : 'correct_answer_text_2'
             }
         generated_report_data = {
             self.student.username : [u1_state_1,u1_state_2],
@@ -165,8 +164,8 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             self.student.email,
             '09472337K',
             '1',
-            u1_state_1[_("Answer")],
-            u1_state_2[_("Answer")],
+            u1_state_1["Answer"],
+            u1_state_2["Answer"],
             '1','3', str(float(1)/float(3)).replace(".",",")
         ])
         student_row2 = ";".join([
@@ -174,8 +173,8 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             self.student2.email,
             '',
             '2',
-            u2_state_1[_("Answer")],
-            u2_state_2[_("Answer")],
+            u2_state_1["Answer"],
+            u2_state_2["Answer"],
             '2','3', str(float(2)/float(3)).replace(".",",")
         ])
         expected_data = [
@@ -224,25 +223,25 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             Test eol_report_analytics view data
         """
         mock_user_id_with_indiv_id_list.return_value = []
-        u1_state_1 = {_("Answer ID"): 'answer_id_1',
-            _("Question"): 'question_text_1',
-            _("Answer"): 'correct_answer_text_1',
-            _("Correct Answer") : 'correct_answer_text_1'
+        u1_state_1 = {"Answer ID": 'answer_id_1',
+            "Question": 'question_text_1',
+            "Answer": 'correct_answer_text_1',
+            "Correct Answer" : 'correct_answer_text_1'
             }
-        u1_state_2 = {_("Answer ID"): 'answer_id_2',
-            _("Question"): 'question_text_2',
-            _("Answer"): 'correct_answer_text_2',
-            _("Correct Answer") : 'correct_answer_text_2'
+        u1_state_2 = {"Answer ID": 'answer_id_2',
+            "Question": 'question_text_2',
+            "Answer": 'correct_answer_text_2',
+            "Correct Answer" : 'correct_answer_text_2'
             }
-        u2_state_1 = {_("Answer ID"): 'answer_id_1',
-            _("Question"): 'question_text_1',
-            _("Answer"): 'correct_answer_text_1',
-            _("Correct Answer") : 'correct_answer_text_1'
+        u2_state_1 = {"Answer ID": 'answer_id_1',
+            "Question": 'question_text_1',
+            "Answer": 'correct_answer_text_1',
+            "Correct Answer" : 'correct_answer_text_1'
             }
-        u2_state_2 = {_("Answer ID"): 'answer_id_2',
-            _("Question"): 'question_text_2',
-            _("Answer"): 'correct_answer_text_2',
-            _("Correct Answer") : 'correct_answer_text_2'
+        u2_state_2 = {"Answer ID": 'answer_id_2',
+            "Question": 'question_text_2',
+            "Answer": 'correct_answer_text_2',
+            "Correct Answer" : 'correct_answer_text_2'
             }
         generated_report_data = {
             self.student.username : [u1_state_1,u1_state_2],
@@ -279,8 +278,8 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             self.student.email,
             '',
             '1',
-            u1_state_1[_("Answer")],
-            u1_state_2[_("Answer")],
+            u1_state_1["Answer"],
+            u1_state_2["Answer"],
             '3','3', '1,0'
         ])
         student_row2 = ";".join([
@@ -288,8 +287,8 @@ class TestEolReportAnalyticsView(ModuleStoreTestCase):
             self.student2.email,
             '',
             '2',
-            u2_state_1[_("Answer")],
-            u2_state_2[_("Answer")],
+            u2_state_1["Answer"],
+            u2_state_2["Answer"],
             '3','3', '1,0'
         ])
         expected_data = [

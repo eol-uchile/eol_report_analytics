@@ -1,0 +1,27 @@
+<%page expression_filter="h"/>
+<%namespace name='static' file='/static_content.html'/>
+<%! 
+from django.urls import reverse
+from django.utils.http import urlencode
+from django.utils.translation import ugettext as _ 
+%>
+<%
+base_url = reverse('eol_report_analytics:data')
+params = urlencode({'course': course.id})
+eol_report_analytics_url = f"{base_url}?{params}"
+%>
+<script type="text/javascript" src="${static.url('eol_report_analytics/js/eol_report_analytics.js')}"></script>
+<link rel="stylesheet" type="text/css" href="${static.url('eol_report_analytics/css/eol_report_analytics.css')}"/>
+
+<div class='eol_report_analytics-report mt-3 mb-3'>
+  <h4 class="hd hd-4">${_("Problem analytics")}</h4>
+  <div class="eol_report_analytics_group">
+    <input id="eol_report_analytics_input" type="text" placeholder="block-v1:eol+test100+2021_1+type@problem+block@936f2950368f4eff8dfc4451c865d28c">
+    <button type="button" name="eol_report_analytics-report" onclick="generate_analytics_report(this)" data-endpoint="${ eol_report_analytics_url }">
+      ${_("Download problem analytics report")}
+    </button>
+  </div>
+  <div class="eol_report_analytics-success-msg" id="eol_report_analytics-success-msg"></div>
+  <div class="eol_report_analytics-warning-msg" id="eol_report_analytics-warning-msg"></div>
+  <div class="eol_report_analytics-error-msg" id="eol_report_analytics-error-msg"></div>
+</div>
