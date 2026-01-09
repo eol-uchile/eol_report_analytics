@@ -13,39 +13,46 @@ Question report in CSV.
 
 # Install Theme
 
-To enable export Eol Report Analytics button in your theme add next file and/or lines of code:
+To enable the export eol report analytics button, add the following code to your theme. This includes a conditional check to ensure the template only renders if the app is installed.
 
 - _../themes/your_theme/lms/templates/instructor/instructor_dashboard_2/data_download.html_
 
-    **add the script and css**
+    **add eol_report_analytics template to the data_download template**
 
-        <script type="text/javascript" src="${static.url('eol_report_analytics/js/eol_report_analytics.js')}"></script>
-        <link rel="stylesheet" type="text/css" href="${static.url('eol_report_analytics/css/eol_report_analytics.css')}"/>
-
-    **and add html button**
-
-          %if 'has_eol_report_analytics' in section_data and section_data['has_eol_report_analytics']:
-            <div class='eol_report_analytics-report'>
-                <hr>
-                <h4 class="hd hd-4">${_("Analítica de preguntas")}</h4>
-                <p>
-                    <input id="eol_report_analytics_input" type="text" placeholder="block-v1:eol+test100+2021_1+type@problem+block@936f2950368f4eff8dfc4451c865d28c">
-                    <input onclick="generate_analytics_report(this)" type="button" name="eol_report_analytics-report" value="${_("Generar")}" data-endpoint="${ section_data['eol_report_analytics_url'] }"/>
-                </p>
-                <div class="eol_report_analytics-success-msg" id="eol_report_analytics-success-msg"></div>
-                <div class="eol_report_analytics-warning-msg" id="eol_report_analytics-warning-msg"></div>
-                <div class="eol_report_analytics-error-msg" id="eol_report_analytics-error-msg"></div>
-            </div>
+        <% 
+        eol_report_analytics_url = None
+        eol_report_analytics_traceback = None
+        try:
+          eol_report_analytics_url = reverse('eol_report_analytics:data')
+        except Exception as e:
+          if settings.DEBUG:
+            eol_report_analytics_traceback = traceback.format_exc() 
+        %>
+        %if eol_report_analytics_traceback:
+          <div class="eol_report_analytics_traceback">
+            <pre>${eol_report_analytics_traceback}</pre>
+          </div>
+        %elif eol_report_analytics_url:
+          <%include file="eol_report_analytics.html"/>
         %endif
 
-- In your edx-platform add the following code in the function '_section_data_download' in _edx-platform/lms/djangoapps/instructor/views/instructor_dashboard.py_
+### Adding new translations:
 
-        try:
-            from eol_report_analytics import views
-            section_data['has_eol_report_analytics'] = True
-            section_data['eol_report_analytics_url'] = '{}?{}'.format(reverse('eol_report_analytics:data'), urllib.parse.urlencode({'course': str(course_key)}))
-        except ImportError:
-            section_data['has_eol_report_analytics'] = False
+To extract and update any new translatable text, run the update command below. After manually filling in the new translations, run the compile command to update the .mo translation files.
+
+### Commands
+
+**Update**
+
+    docker run -it --rm -w /code -v $(pwd):/code python:3.8 bash
+    pip install -r requirements-i18n.in
+    make update_translations
+
+**Compile**
+
+    docker run -it --rm -w /code -v $(pwd):/code python:3.8 bash
+    pip install -r requirements-i18n.in
+    make compile_translations
 
 ## TESTS
 **Prepare tests:**
