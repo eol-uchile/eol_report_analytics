@@ -44,6 +44,7 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+reports/
 nosetests.xml
 coverage.xml
 *.cover
@@ -128,4 +129,4 @@ dmypy.json
 
 # openedx test files
 test_root/
-setup.cfg
+
